@@ -1,0 +1,10 @@
+{
+  "name": "Satna — अपना शहर, अपनी पहचान",
+  "short_name": "Satna",
+  "description": "The city app for Satna, Madhya Pradesh",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F7FA",
+  "theme_color": "#4C6A92",
+  "icons": []
+}
