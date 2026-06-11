@@ -1,6 +1,18 @@
 # Satna — अपना शहर, अपनी पहचान
 
-Mobile-first city app for Satna, Madhya Pradesh. Next.js 14 (App Router) + Supabase + Tailwind CSS.
+Mobile-first city app for Satna, Madhya Pradesh. Next.js 14 (App Router) + Supabase + Tailwind CSS, in a Nordic blue design language.
+
+**Live:** https://ambuj1tripathi-debug.github.io/satna-app/
+
+## Deploy
+
+Static export to GitHub Pages:
+
+```bash
+GITHUB_PAGES=true npm run build && touch out/.nojekyll
+cd out && git init -b gh-pages && git add -A && git commit -m deploy \
+  && git push -f https://github.com/ambuj1tripathi-debug/satna-app.git gh-pages && rm -rf .git
+```
 
 ## Run it
 
