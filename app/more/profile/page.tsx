@@ -7,13 +7,11 @@ import { initialStats } from "@/components/play/Quiz";
 import { useT } from "@/components/LangProvider";
 import { useAuth } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
+import AuthForm from "@/components/AuthForm";
 
 function AccountCard() {
   const t = useT();
   const { user, ready } = useAuth();
-  const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
   const sb = getSupabase();
 
   if (!sb || !ready) return null;
@@ -38,50 +36,18 @@ function AccountCard() {
     );
   }
 
-  const sendLink = async () => {
-    setErr(null);
-    const { error } = await sb.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: window.location.href },
-    });
-    if (error) setErr(error.message);
-    else setSent(true);
-  };
-
   return (
     <div className="card mt-3 p-4">
       <p className="text-sm font-semibold text-ink">
         🔐 {t("Sign in to post for everyone", "सबके लिए पोस्ट करने हेतु साइन इन करें")}
       </p>
-      <p className="mt-1 text-xs text-muted">
+      <p className="mb-3 mt-1 text-xs text-muted">
         {t(
           "Without an account everything still works, but saves only on this device.",
           "बिना अकाउंट सब चलता है, पर केवल इसी डिवाइस पर सहेजा जाता है।",
         )}
       </p>
-      {sent ? (
-        <p className="mt-3 rounded-lg bg-positive-50 px-3 py-2 text-xs font-medium text-positive">
-          ✓ {t("Magic link sent — check your email and tap the link.", "मैजिक लिंक भेजा गया — ईमेल देखें और लिंक दबाएँ।")}
-        </p>
-      ) : (
-        <div className="mt-3 flex gap-2">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={t("you@email.com", "aapka@email.com")}
-            className="min-w-0 flex-1 rounded-full border border-cardline bg-white px-4 py-2.5 text-sm text-ink"
-          />
-          <button
-            onClick={sendLink}
-            disabled={!email.includes("@")}
-            className="shrink-0 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
-          >
-            {t("Send link", "लिंक भेजें")}
-          </button>
-        </div>
-      )}
-      {err && <p className="mt-2 text-xs text-danger">{err}</p>}
+      <AuthForm />
     </div>
   );
 }

@@ -2,10 +2,10 @@
 
 // Real admin panel — gated by profiles.role (RLS enforces every write).
 // The FIRST account to sign up becomes admin automatically.
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
+import AuthForm from "@/components/AuthForm";
 
 type Row = Record<string, unknown> & { id: string };
 
@@ -40,18 +40,18 @@ export default function AdminPage() {
   if (!user) {
     return (
       <main className="flex min-h-dvh items-center justify-center px-6">
-        <div className="card w-full max-w-sm p-6 text-center">
-          <h1 className="font-heading text-lg font-semibold text-ink">Satna Admin</h1>
-          <p className="mt-2 text-sm text-muted">
-            Sign in with your email first — the <b>first account ever created
-            becomes the admin</b> automatically.
+        <div className="card w-full max-w-sm p-6">
+          <h1 className="text-center font-heading text-lg font-semibold text-ink">
+            Satna Admin
+          </h1>
+          <p className="mt-2 text-center text-sm text-muted">
+            Enter any email + a password and tap{" "}
+            <b>Create account</b>. The <b>first account ever created becomes
+            the admin</b> automatically — no email verification needed.
           </p>
-          <Link
-            href="/more/profile"
-            className="mt-4 inline-block rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-white"
-          >
-            Go to sign in →
-          </Link>
+          <div className="mt-4">
+            <AuthForm />
+          </div>
         </div>
       </main>
     );

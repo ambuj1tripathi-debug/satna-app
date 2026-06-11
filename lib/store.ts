@@ -2,6 +2,24 @@
 
 import { useEffect, useRef, useState } from "react";
 
+// One-time migration: earlier builds cached bundled demo content in
+// localStorage. Purge those keys so removed placeholders don't linger on
+// devices that visited before the cleanup. Runs at module load, before any
+// component reads state.
+const DATA_VERSION = "2";
+if (typeof window !== "undefined") {
+  try {
+    if (localStorage.getItem("satna:data-version") !== DATA_VERSION) {
+      ["feed-posts", "feed-liked", "dine-plans", "cab-rides", "memories", "polls"].forEach(
+        (k) => localStorage.removeItem(`satna:${k}`),
+      );
+      localStorage.setItem("satna:data-version", DATA_VERSION);
+    }
+  } catch {
+    // private mode — nothing cached anyway
+  }
+}
+
 /** useState that persists to localStorage (client-only, SSR-safe).
  *  Used for all interactive state until Supabase auth lands — then these
  *  writes move to the database and this becomes the offline cache. */
