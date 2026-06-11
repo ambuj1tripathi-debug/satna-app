@@ -3,6 +3,7 @@ import { Poppins, Inter, Noto_Sans_Devanagari } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
 import { LangProvider } from "@/components/LangProvider";
+import { AuthProvider } from "@/lib/auth";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -41,10 +42,12 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} ${inter.variable} ${devanagari.variable} antialiased`}
       >
-        <LangProvider>
-          <div className="mx-auto min-h-dvh max-w-lg pb-24">{children}</div>
-          <BottomNav />
-        </LangProvider>
+        <AuthProvider>
+          <LangProvider>
+            <div className="mx-auto min-h-dvh max-w-lg pb-24">{children}</div>
+            <BottomNav />
+          </LangProvider>
+        </AuthProvider>
       </body>
     </html>
   );

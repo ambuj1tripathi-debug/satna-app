@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { Memory } from "@/lib/types";
 import { seedMemories, eraLabels } from "@/lib/seed-community";
 import { usePersistentState } from "@/lib/store";
+import { useAuth, dbInsert } from "@/lib/auth";
 import { useT } from "../LangProvider";
 
 const typeBadge: Record<string, { emoji: string; en: string; hi: string }> = {
@@ -133,15 +134,113 @@ export default function Memories() {
         )}
       </div>
 
-      <button className="mt-4 w-full rounded-full border-2 border-dashed border-sand/50 py-3 text-sm font-semibold text-sand">
-        + {t("Share a memory", "याद साझा करें")}
-      </button>
+      <ShareMemory />
       <p className="mt-2 text-center text-[10px] text-muted">
         {t(
           "All submissions are reviewed by admins before going live",
           "सभी योगदान लाइव होने से पहले एडमिन द्वारा जाँचे जाते हैं",
         )}
       </p>
+    </div>
+  );
+}
+
+function ShareMemory() {
+  const t = useT();
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [caption, setCaption] = useState("");
+  const [story, setStory] = useState("");
+  const [era, setEra] = useState("era_1980s_90s");
+  const [sent, setSent] = useState(false);
+
+  if (sent) {
+    return (
+      <p className="mt-4 rounded-card bg-positive-50 p-3 text-center text-xs font-medium text-positive">
+        ✓ {t("Memory submitted for review — dhanyavaad!", "याद समीक्षा हेतु भेजी गई — धन्यवाद!")}
+      </p>
+    );
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="mt-4 w-full rounded-full border-2 border-dashed border-sand/50 py-3 text-sm font-semibold text-sand"
+      >
+        + {t("Share a memory", "याद साझा करें")}
+      </button>
+    );
+  }
+
+  const submit = () => {
+    if (!caption.trim()) return;
+    if (user) {
+      void dbInsert("memories", {
+        user_id: user.id,
+        type: "story",
+        era,
+        caption: caption.trim(),
+        story: story.trim().split(/\s+/).slice(0, 300).join(" ") || null,
+        location_tag: "Satna",
+      });
+    }
+    setSent(true);
+  };
+
+  const inputCls =
+    "w-full rounded-lg border border-cardline bg-white px-3 py-2.5 text-sm text-ink";
+
+  return (
+    <div className="card mt-4 space-y-3 p-4">
+      <p className="font-heading text-base font-semibold text-ink">
+        {t("Share a memory", "याद साझा करें")}
+      </p>
+      {!user && (
+        <p className="rounded-lg bg-canvas px-3 py-2 text-xs text-muted">
+          {t(
+            "Sign in (More → Profile) so your memory reaches the review queue.",
+            "साइन इन करें (और → प्रोफाइल) ताकि आपकी याद समीक्षा कतार तक पहुँचे।",
+          )}
+        </p>
+      )}
+      <input
+        value={caption}
+        onChange={(e) => setCaption(e.target.value)}
+        placeholder={t("One-line caption", "एक पंक्ति का शीर्षक")}
+        className={inputCls}
+      />
+      <textarea
+        value={story}
+        onChange={(e) => setStory(e.target.value)}
+        rows={4}
+        placeholder={t("Your story (max 300 words)", "आपका किस्सा (अधिकतम 300 शब्द)")}
+        className={inputCls}
+      />
+      <select value={era} onChange={(e) => setEra(e.target.value)} className={inputCls}>
+        {Object.entries(eraLabels)
+          .filter(([k]) => k !== "all")
+          .map(([k, v]) => (
+            <option key={k} value={k}>
+              {t(v.en, v.hi)}
+            </option>
+          ))}
+      </select>
+      <div className="flex gap-2">
+        <button
+          onClick={() => setOpen(false)}
+          className="flex-1 rounded-full border border-cardline py-2.5 text-sm font-medium text-muted"
+        >
+          {t("Cancel", "रद्द करें")}
+        </button>
+        <button
+          onClick={submit}
+          disabled={!caption.trim()}
+          className="flex-1 rounded-full bg-sand py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+        >
+          {t("Submit", "भेजें")}
+        </button>
+      </div>
     </div>
   );
 }

@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import type { CabRide } from "@/lib/types";
 import { seedCabRides, cabRoutes } from "@/lib/seed-social";
 import { usePersistentState } from "@/lib/store";
+import { useAuth, dbInsert, isUuid } from "@/lib/auth";
+import { getSupabase } from "@/lib/supabase";
 import { useT } from "../LangProvider";
 
 function rideTime(iso: string, t: (en: string, hi?: string | null) => string) {
@@ -19,8 +21,10 @@ function rideTime(iso: string, t: (en: string, hi?: string | null) => string) {
 
 export default function CabShare() {
   const t = useT();
+  const { user } = useAuth();
   const [route, setRoute] = useState("All routes");
   const [rides, setRides] = usePersistentState<CabRide[]>("cab-rides", seedCabRides);
+  const [dbRides, setDbRides] = useState<CabRide[]>([]);
   const [requested, setRequested] = usePersistentState<string[]>("cab-requested", []);
   const [showForm, setShowForm] = useState(false);
   const [showEtiquette, setShowEtiquette] = useState(false);
@@ -29,20 +33,61 @@ export default function CabShare() {
   useEffect(() => {
     if (!localStorage.getItem("satna-cab-etiquette-seen")) setShowEtiquette(true);
   }, []);
+
+  // live rides from Supabase
+  useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) return;
+    sb.from("cab_rides")
+      .select("*, profiles(username, created_at)")
+      .eq("status", "open")
+      .gte("departs_at", new Date().toISOString())
+      .then(({ data }) => {
+        if (!data) return;
+        setDbRides(
+          data.map((r) => {
+            const poster = r.profiles as { username?: string; created_at?: string };
+            return {
+              id: r.id,
+              origin: r.origin,
+              destination: r.destination,
+              drop_point: r.drop_point,
+              departs_at: r.departs_at,
+              total_fare: Number(r.total_fare),
+              total_seats: r.total_seats,
+              seats_taken: r.seats_taken,
+              poster_name: poster?.username ?? "Satna member",
+              member_since: poster?.created_at
+                ? new Date(poster.created_at).toLocaleDateString("en-IN", {
+                    month: "short",
+                    year: "numeric",
+                  })
+                : "2026",
+              note: r.note ?? undefined,
+            };
+          }),
+        );
+      });
+  }, []);
+
+  const visibleRides = useMemo(() => {
+    const dbIds = new Set(dbRides.map((r) => r.id));
+    return [...dbRides, ...rides.filter((r) => !dbIds.has(r.id))];
+  }, [dbRides, rides]);
   const dismissEtiquette = () => {
     localStorage.setItem("satna-cab-etiquette-seen", "1");
     setShowEtiquette(false);
   };
 
   const filtered = useMemo(() => {
-    if (route === "All routes") return rides;
+    if (route === "All routes") return visibleRides;
     if (route === "Other")
-      return rides.filter(
+      return visibleRides.filter(
         (r) => !["Rewa", "Jabalpur", "Prayagraj", "Bhopal"].includes(r.destination),
       );
     const dest = route.split("→")[1];
-    return rides.filter((r) => r.destination === dest);
-  }, [rides, route]);
+    return visibleRides.filter((r) => r.destination === dest);
+  }, [visibleRides, route]);
 
   return (
     <div className="px-4">
@@ -120,8 +165,15 @@ export default function CabShare() {
               )}
               <button
                 onClick={() => {
-                  if (!isRequested && seatsLeft > 0)
+                  if (!isRequested && seatsLeft > 0) {
                     setRequested([...requested, r.id]);
+                    if (user && isUuid(r.id)) {
+                      void dbInsert("cab_ride_requests", {
+                        ride_id: r.id,
+                        user_id: user.id,
+                      });
+                    }
+                  }
                 }}
                 disabled={isRequested || seatsLeft === 0}
                 className={`mt-3 w-full rounded-full py-2.5 text-sm font-semibold ${
@@ -158,6 +210,18 @@ export default function CabShare() {
           onCreate={(ride) => {
             setRides([ride, ...rides]);
             setShowForm(false);
+            if (user) {
+              void dbInsert("cab_rides", {
+                poster_id: user.id,
+                origin: ride.origin,
+                destination: ride.destination,
+                drop_point: ride.drop_point,
+                departs_at: ride.departs_at,
+                total_fare: ride.total_fare,
+                total_seats: ride.total_seats,
+                note: ride.note ?? null,
+              });
+            }
           }}
         />
       ) : (

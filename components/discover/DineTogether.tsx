@@ -4,6 +4,9 @@ import { useMemo, useState } from "react";
 import type { DiningPlan, PlanVibe, Restaurant } from "@/lib/types";
 import { seedDiningPlans, vibeLabels } from "@/lib/seed-social";
 import { usePersistentState } from "@/lib/store";
+import { useAuth, dbInsert, isUuid } from "@/lib/auth";
+import { getSupabase } from "@/lib/supabase";
+import { useEffect } from "react";
 import { useT } from "../LangProvider";
 
 const timeFilters = [
@@ -36,14 +39,58 @@ export default function DineTogether({
   restaurants: Restaurant[];
 }) {
   const t = useT();
+  const { user } = useAuth();
   const [filter, setFilter] = useState<(typeof timeFilters)[number]["key"]>("any");
   const [plans, setPlans] = usePersistentState<DiningPlan[]>("dine-plans", seedDiningPlans);
+  const [dbPlans, setDbPlans] = useState<DiningPlan[]>([]);
   const [joined, setJoined] = usePersistentState<string[]>("dine-joined", []);
   const [showForm, setShowForm] = useState(false);
 
+  // live plans from Supabase
+  useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) return;
+    sb.from("dining_plans")
+      .select(
+        "*, restaurants(slug, name_en, cuisines), profiles(username, neighborhood), dining_plan_members(count)",
+      )
+      .eq("status", "open")
+      .gte("scheduled_at", new Date().toISOString())
+      .then(({ data }) => {
+        if (!data) return;
+        setDbPlans(
+          data.map((p) => {
+            const r = p.restaurants as { slug: string; name_en: string; cuisines: string[] };
+            const host = p.profiles as { username?: string; neighborhood?: string };
+            const members =
+              (p.dining_plan_members as { count: number }[])?.[0]?.count ?? 0;
+            return {
+              id: p.id,
+              restaurant_slug: r?.slug ?? "",
+              restaurant_name: r?.name_en ?? "Restaurant",
+              cuisine: r?.cuisines?.join(" · ") ?? "",
+              meal_type: p.meal_type,
+              scheduled_at: p.scheduled_at,
+              host_name: host?.username ?? "Satna member",
+              host_neighborhood: host?.neighborhood ?? "Satna",
+              max_people: p.max_people,
+              joined_count: 1 + members,
+              vibe: p.vibe,
+              note: p.note ?? undefined,
+            };
+          }),
+        );
+      });
+  }, []);
+
+  const visiblePlans = useMemo(() => {
+    const dbIds = new Set(dbPlans.map((p) => p.id));
+    return [...dbPlans, ...plans.filter((p) => !dbIds.has(p.id))];
+  }, [dbPlans, plans]);
+
   const filtered = useMemo(() => {
     const now = new Date();
-    return plans.filter((p) => {
+    return visiblePlans.filter((p) => {
       const d = new Date(p.scheduled_at);
       if (d < now) return false;
       if (filter === "now") return d.getTime() - now.getTime() < 3 * 3600_000;
@@ -56,16 +103,18 @@ export default function DineTogether({
       if (filter === "dinner") return p.meal_type === "dinner";
       return true;
     });
-  }, [plans, filter]);
+  }, [visiblePlans, filter]);
 
   const join = (id: string) => {
     if (joined.includes(id)) return;
     setJoined([...joined, id]);
-    setPlans((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, joined_count: p.joined_count + 1 } : p,
-      ),
-    );
+    const bump = (p: DiningPlan) =>
+      p.id === id ? { ...p, joined_count: p.joined_count + 1 } : p;
+    setPlans((prev) => prev.map(bump));
+    setDbPlans((prev) => prev.map(bump));
+    if (user && isUuid(id)) {
+      void dbInsert("dining_plan_members", { plan_id: id, user_id: user.id });
+    }
   };
 
   return (
@@ -166,6 +215,18 @@ export default function DineTogether({
           onCreate={(plan) => {
             setPlans([plan, ...plans]);
             setShowForm(false);
+            const r = restaurants.find((x) => x.slug === plan.restaurant_slug);
+            if (user && r && isUuid(r.id)) {
+              void dbInsert("dining_plans", {
+                host_id: user.id,
+                restaurant_id: r.id,
+                meal_type: plan.meal_type,
+                scheduled_at: plan.scheduled_at,
+                max_people: plan.max_people,
+                vibe: plan.vibe,
+                note: plan.note ?? null,
+              });
+            }
           }}
         />
       ) : (

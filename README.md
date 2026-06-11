@@ -30,6 +30,10 @@ Works out of the box with bundled seed data. To use a real database:
 
 The data layer ([lib/data.ts](lib/data.ts)) automatically prefers Supabase when env vars are set and falls back to [lib/seed-data.ts](lib/seed-data.ts) otherwise.
 
+## Backend (connected)
+
+The live site is wired to a Supabase project (`ap-south-1`): schema + RLS from `supabase/migrations/`, launch content from `seed.sql`. Auth is email magic-link (Supabase built-in SMTP — limited to a few emails/hour until a custom SMTP provider is configured; phone-OTP needs an SMS provider). Signed-in users write posts, dining plans, cab rides, reviews, memories and trivia to the shared database; signed-out users keep device-local persistence. Moderation (pending memories/trivia/edits) is done in the Supabase dashboard until the in-app admin is connected.
+
 ## Built so far
 
 - **Database schema** — complete, covering all 5 tabs + admin/moderation (roles, queued edits, RLS policies, rating triggers, profile auto-creation on signup).

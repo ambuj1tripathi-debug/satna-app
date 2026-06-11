@@ -5,6 +5,86 @@ import TopBar from "@/components/TopBar";
 import { usePersistentState } from "@/lib/store";
 import { initialStats } from "@/components/play/Quiz";
 import { useT } from "@/components/LangProvider";
+import { useAuth } from "@/lib/auth";
+import { getSupabase } from "@/lib/supabase";
+
+function AccountCard() {
+  const t = useT();
+  const { user, ready } = useAuth();
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const sb = getSupabase();
+
+  if (!sb || !ready) return null;
+
+  if (user) {
+    return (
+      <div className="card mt-3 flex items-center gap-3 border-positive/40 p-4">
+        <span className="text-xl">✅</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-ink">
+            {t("Signed in", "साइन इन")}
+          </p>
+          <p className="truncate text-xs text-muted">{user.email}</p>
+        </div>
+        <button
+          onClick={() => sb.auth.signOut()}
+          className="rounded-full border border-cardline px-3 py-1.5 text-xs font-medium text-muted"
+        >
+          {t("Sign out", "साइन आउट")}
+        </button>
+      </div>
+    );
+  }
+
+  const sendLink = async () => {
+    setErr(null);
+    const { error } = await sb.auth.signInWithOtp({
+      email: email.trim(),
+      options: { emailRedirectTo: window.location.href },
+    });
+    if (error) setErr(error.message);
+    else setSent(true);
+  };
+
+  return (
+    <div className="card mt-3 p-4">
+      <p className="text-sm font-semibold text-ink">
+        🔐 {t("Sign in to post for everyone", "सबके लिए पोस्ट करने हेतु साइन इन करें")}
+      </p>
+      <p className="mt-1 text-xs text-muted">
+        {t(
+          "Without an account everything still works, but saves only on this device.",
+          "बिना अकाउंट सब चलता है, पर केवल इसी डिवाइस पर सहेजा जाता है।",
+        )}
+      </p>
+      {sent ? (
+        <p className="mt-3 rounded-lg bg-positive-50 px-3 py-2 text-xs font-medium text-positive">
+          ✓ {t("Magic link sent — check your email and tap the link.", "मैजिक लिंक भेजा गया — ईमेल देखें और लिंक दबाएँ।")}
+        </p>
+      ) : (
+        <div className="mt-3 flex gap-2">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={t("you@email.com", "aapka@email.com")}
+            className="min-w-0 flex-1 rounded-full border border-cardline bg-white px-4 py-2.5 text-sm text-ink"
+          />
+          <button
+            onClick={sendLink}
+            disabled={!email.includes("@")}
+            className="shrink-0 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+          >
+            {t("Send link", "लिंक भेजें")}
+          </button>
+        </div>
+      )}
+      {err && <p className="mt-2 text-xs text-danger">{err}</p>}
+    </div>
+  );
+}
 
 interface Profile {
   name: string;
@@ -30,6 +110,22 @@ export default function ProfilePage() {
   if (bingoDone.length >= 5) badges.push("🧭 Satna Explorer");
   if (stats.streak >= 7) badges.push("🔥 7-day streak");
 
+  const syncProfile = async (p: Profile) => {
+    // mirror the local profile to Supabase when signed in
+    const sb = getSupabase();
+    const { data } = (await sb?.auth.getUser()) ?? {};
+    if (sb && data?.user) {
+      await sb
+        .from("profiles")
+        .update({
+          username: p.name,
+          neighborhood: p.neighborhood,
+          persona: p.persona,
+        })
+        .eq("id", data.user.id);
+    }
+  };
+
   if (!profile || editing) {
     return (
       <main>
@@ -39,8 +135,12 @@ export default function ProfilePage() {
           onSave={(p) => {
             setProfile(p);
             setEditing(false);
+            void syncProfile(p);
           }}
         />
+        <div className="px-4">
+          <AccountCard />
+        </div>
       </main>
     );
   }
@@ -70,6 +170,8 @@ export default function ProfilePage() {
             {t("Edit", "बदलें")}
           </button>
         </div>
+
+        <AccountCard />
 
         <div className="card mt-3 grid grid-cols-3 divide-x divide-cardline">
           <div className="p-3 text-center">
@@ -112,8 +214,8 @@ export default function ProfilePage() {
 
         <p className="mt-5 rounded-card border border-dashed border-cardline p-3 text-center text-[11px] text-muted">
           {t(
-            "Phone-OTP accounts arrive with the Supabase hookup — your local progress will carry over.",
-            "फोन-OTP अकाउंट Supabase के साथ आएँगे — आपकी प्रगति सुरक्षित रहेगी।",
+            "Quiz XP and bingo progress live on this device; posts, plans and reviews sync to the community when you're signed in.",
+            "क्विज़ XP व बिंगो इसी डिवाइस पर; साइन इन होने पर पोस्ट, प्लान और समीक्षाएँ समुदाय से जुड़ती हैं।",
           )}
         </p>
       </div>

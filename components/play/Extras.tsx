@@ -4,7 +4,16 @@
 import { useState } from "react";
 import { quizCategories, currentChallenge, bingoCard } from "@/lib/seed-more";
 import { usePersistentState } from "@/lib/store";
+import { useAuth, dbInsert } from "@/lib/auth";
 import { useT } from "../LangProvider";
+
+const dbCategory: Record<string, string> = {
+  history: "history_heritage",
+  geography: "geography",
+  culture: "culture_festivals",
+  people: "famous_people",
+  mp: "mp_general",
+};
 
 // ---------- Trivia Submit ----------
 interface Submission {
@@ -15,6 +24,7 @@ interface Submission {
 
 export function TriviaSubmit() {
   const t = useT();
+  const { user } = useAuth();
   const [subs, setSubs] = usePersistentState<Submission[]>("trivia-submissions", []);
   const [q, setQ] = useState("");
   const [options, setOptions] = useState(["", "", "", ""]);
@@ -28,6 +38,16 @@ export function TriviaSubmit() {
   const submit = () => {
     if (!valid) return;
     setSubs([{ q: q.trim(), category, status: "pending" }, ...subs]);
+    if (user) {
+      void dbInsert("quiz_questions", {
+        category: dbCategory[category] ?? "mp_general",
+        question_en: q.trim(),
+        options: options.map((o) => o.trim()),
+        correct_index: correct,
+        submitted_by: user.id,
+        status: "pending",
+      });
+    }
     setQ("");
     setOptions(["", "", "", ""]);
   };

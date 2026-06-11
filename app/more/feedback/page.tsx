@@ -3,6 +3,7 @@
 import { useState } from "react";
 import TopBar from "@/components/TopBar";
 import { usePersistentState } from "@/lib/store";
+import { useAuth, dbInsert } from "@/lib/auth";
 import { useT } from "@/components/LangProvider";
 
 export default function FeedbackPage() {
@@ -15,9 +16,13 @@ export default function FeedbackPage() {
   const [body, setBody] = useState("");
   const [done, setDone] = useState(false);
 
+  const { user } = useAuth();
+
   const submit = () => {
     if (!body.trim()) return;
     setSent([{ type, body: body.trim() }, ...sent]);
+    // feedback table accepts anonymous rows too
+    void dbInsert("feedback", { user_id: user?.id ?? null, type, body: body.trim() });
     setBody("");
     setDone(true);
   };

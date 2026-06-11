@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CommunityPost } from "@/lib/types";
 import { seedPosts, postCategories } from "@/lib/seed-community";
 import { usePersistentState } from "@/lib/store";
+import { useAuth, dbInsert, isUuid } from "@/lib/auth";
+import { getSupabase } from "@/lib/supabase";
 import { useT } from "../LangProvider";
 
 const typeLabels: Record<string, { emoji: string; en: string; hi: string }> = {
@@ -23,24 +25,70 @@ function timeAgo(iso: string, t: (en: string, hi?: string | null) => string) {
 
 export default function Feed() {
   const t = useT();
+  const { user } = useAuth();
   const [category, setCategory] = useState("all");
   const [posts, setPosts] = usePersistentState<CommunityPost[]>("feed-posts", seedPosts);
+  const [dbPosts, setDbPosts] = useState<CommunityPost[]>([]);
   const [liked, setLiked] = usePersistentState<string[]>("feed-liked", []);
   const [showCompose, setShowCompose] = useState(false);
 
+  // community posts from Supabase, shown above the bundled seed content
+  useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) return;
+    sb.from("posts")
+      .select("*, profiles(username, neighborhood)")
+      .eq("status", "approved")
+      .order("created_at", { ascending: false })
+      .limit(50)
+      .then(({ data }) => {
+        if (!data) return;
+        setDbPosts(
+          data.map((p) => ({
+            id: p.id,
+            type: p.type,
+            category: p.category,
+            title: p.title,
+            body: p.body ?? "",
+            author: p.is_anonymous
+              ? "Satna Resident"
+              : ((p.profiles as { username?: string })?.username ?? "Satna Resident"),
+            neighborhood:
+              p.neighborhood ??
+              (p.profiles as { neighborhood?: string })?.neighborhood ??
+              "Satna",
+            is_anonymous: p.is_anonymous,
+            like_count: p.like_count,
+            comment_count: 0,
+            created_at: p.created_at,
+          })),
+        );
+      });
+  }, []);
+
+  const allPosts = useMemo(() => {
+    const dbIds = new Set(dbPosts.map((p) => p.id));
+    return [...dbPosts, ...posts.filter((p) => !dbIds.has(p.id))];
+  }, [dbPosts, posts]);
+
   const filtered = useMemo(
-    () => (category === "all" ? posts : posts.filter((p) => p.category === category)),
-    [posts, category],
+    () =>
+      category === "all"
+        ? allPosts
+        : allPosts.filter((p) => p.category === category),
+    [allPosts, category],
   );
 
   const toggleLike = (id: string) => {
     const isLiked = liked.includes(id);
     setLiked(isLiked ? liked.filter((x) => x !== id) : [...liked, id]);
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, like_count: p.like_count + (isLiked ? -1 : 1) } : p,
-      ),
-    );
+    const bump = (p: CommunityPost) =>
+      p.id === id ? { ...p, like_count: p.like_count + (isLiked ? -1 : 1) } : p;
+    setPosts((prev) => prev.map(bump));
+    setDbPosts((prev) => prev.map(bump));
+    if (!isLiked && user && isUuid(id)) {
+      void dbInsert("post_likes", { post_id: id, user_id: user.id });
+    }
   };
 
   return (
@@ -103,6 +151,17 @@ export default function Feed() {
           onCreate={(post) => {
             setPosts([post, ...posts]);
             setShowCompose(false);
+            if (user) {
+              void dbInsert("posts", {
+                user_id: user.id,
+                type: post.type,
+                category: post.category,
+                title: post.title,
+                body: post.body,
+                neighborhood: post.neighborhood,
+                is_anonymous: post.is_anonymous,
+              });
+            }
           }}
         />
       ) : (

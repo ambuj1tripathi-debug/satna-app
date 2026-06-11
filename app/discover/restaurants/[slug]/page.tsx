@@ -8,6 +8,7 @@ import {
 } from "@/lib/data";
 import { formatTime12, isOpenNow, priceSymbol } from "@/lib/format";
 import { CardImage, Stars, VegMark } from "@/components/ui";
+import ReviewsSection from "@/components/ReviewsSection";
 
 const menuOrder = ["Starters", "Main", "Breads", "Drinks", "Sweets"];
 
@@ -154,29 +155,8 @@ export default async function RestaurantDetail({
         </section>
       )}
 
-      {/* reviews */}
-      <section className="px-4 pt-6">
-        <div className="flex items-center justify-between">
-          <h2 className="font-heading text-lg font-semibold text-ink">Reviews</h2>
-          <button className="text-sm font-medium text-primary">Write a review</button>
-        </div>
-        <div className="mt-3 space-y-3">
-          {reviews.slice(0, 5).map((v) => (
-            <div key={v.id} className="card p-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-ink">{v.username}</p>
-                <Stars rating={v.rating} />
-              </div>
-              {v.body && <p className="mt-1.5 text-sm text-muted">{v.body}</p>}
-            </div>
-          ))}
-          {reviews.length === 0 && (
-            <p className="text-sm text-muted">
-              No reviews yet — be the first to share your experience!
-            </p>
-          )}
-        </div>
-      </section>
+      {/* reviews — live from Supabase, with write form */}
+      <ReviewsSection subjectId={r.id} initial={reviews} />
 
       {/* owner claim */}
       <section className="px-4 pb-4 pt-6">
