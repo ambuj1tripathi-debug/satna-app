@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Memory } from "@/lib/types";
 import { seedMemories, eraLabels } from "@/lib/seed-community";
 import { usePersistentState } from "@/lib/store";
 import { useAuth, dbInsert } from "@/lib/auth";
+import { getSupabase } from "@/lib/supabase";
 import { useT } from "../LangProvider";
 
 const typeBadge: Record<string, { emoji: string; en: string; hi: string }> = {
@@ -18,6 +19,37 @@ export default function Memories() {
   const [era, setEra] = useState("all");
   const [memories, setMemories] = usePersistentState<Memory[]>("memories", seedMemories);
   const [remembered, setRemembered] = usePersistentState<string[]>("memories-remembered", []);
+
+  // approved memories from the moderation queue
+  useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) return;
+    sb.from("memories")
+      .select("*, profiles(username)")
+      .eq("status", "approved")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (!data) return;
+        setMemories(
+          data.map((m) => ({
+            id: m.id,
+            type: m.type,
+            era: m.era ?? "recent",
+            caption: m.caption ?? "",
+            story: m.story ?? undefined,
+            year_estimate: m.year_estimate ?? undefined,
+            location_tag: m.location_tag ?? "Satna",
+            contributor:
+              (m.profiles as { username?: string })?.username ?? "Satna Resident",
+            like_count: m.like_count,
+            remember_count: m.remember_count,
+            comment_count: 0,
+            is_featured: m.is_featured,
+          })),
+        );
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filtered = useMemo(
     () => (era === "all" ? memories : memories.filter((m) => m.era === era)),

@@ -1,12 +1,12 @@
-// Data access layer: reads from Supabase when configured,
-// otherwise serves the bundled seed data.
+// Data access layer: reads from Supabase when configured.
+// The bundled seed data is used ONLY when no Supabase project is set up
+// (local development without env vars) — never to mask an empty database.
 import { getSupabase } from "./supabase";
 import {
   seedPlaces,
   seedRestaurants,
   seedMenuItems,
   seedEvents,
-  seedReviews,
 } from "./seed-data";
 import type { Place, Restaurant, MenuItem, CityEvent, Review } from "./types";
 
@@ -18,7 +18,7 @@ export async function getPlaces(): Promise<Place[]> {
       .select("*")
       .eq("status", "published")
       .order("is_featured", { ascending: false });
-    if (!error && data?.length) return data as Place[];
+    if (!error) return (data ?? []) as Place[];
   }
   return seedPlaces;
 }
@@ -35,7 +35,7 @@ export async function getRestaurants(): Promise<Restaurant[]> {
       .select("*")
       .eq("status", "published")
       .order("avg_rating", { ascending: false });
-    if (!error && data?.length) return data as Restaurant[];
+    if (!error) return (data ?? []) as Restaurant[];
   }
   return seedRestaurants;
 }
@@ -55,7 +55,7 @@ export async function getMenuItems(restaurantId: string): Promise<MenuItem[]> {
       .select("*")
       .eq("restaurant_id", restaurantId)
       .eq("status", "approved");
-    if (!error && data?.length) return data as MenuItem[];
+    if (!error) return (data ?? []) as MenuItem[];
   }
   return seedMenuItems.filter((m) => m.restaurant_id === restaurantId);
 }
@@ -70,7 +70,7 @@ export async function getUpcomingEvents(limit = 3): Promise<CityEvent[]> {
       .gte("starts_at", new Date().toISOString())
       .order("starts_at")
       .limit(limit);
-    if (!error && data?.length) return data as CityEvent[];
+    if (!error) return (data ?? []) as CityEvent[];
   }
   return seedEvents
     .filter((e) => new Date(e.ends_at ?? e.starts_at) >= new Date())
@@ -91,14 +91,13 @@ export async function getReviews(
       .eq("subject_id", subjectId)
       .eq("status", "approved")
       .order("created_at", { ascending: false });
-    if (!error && data?.length) {
-      return data.map((r) => ({
+    if (!error) {
+      return (data ?? []).map((r) => ({
         ...r,
-        username: (r.profiles as { username?: string })?.username ?? "Satna Resident",
+        username:
+          (r.profiles as { username?: string })?.username ?? "Satna Resident",
       })) as Review[];
     }
   }
-  return seedReviews.filter(
-    (r) => r.subject_type === subjectType && r.subject_id === subjectId,
-  );
+  return [];
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { todayThought, historyFact } from "@/lib/seed-data";
+import { getSupabase } from "@/lib/supabase";
 import { useT } from "../LangProvider";
 
 interface Weather {
@@ -21,6 +22,29 @@ export default function TodayInSatna() {
   const t = useT();
   const [weather, setWeather] = useState<Weather | null>(null);
   const [mood, setMood] = useState<string | null>(null);
+  const [thought, setThought] = useState(todayThought);
+  const [fact, setFact] = useState(historyFact);
+
+  // admin-curated thought + history fact from the DB
+  useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) return;
+    sb.from("daily_thoughts")
+      .select("body_en, body_hi")
+      .eq("status", "approved")
+      .order("shown_on", { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        const d = data?.[0];
+        if (d?.body_en || d?.body_hi)
+          setThought({ en: d.body_en ?? d.body_hi ?? "", hi: d.body_hi ?? d.body_en ?? "" });
+      });
+    sb.from("history_facts")
+      .select("fact")
+      .order("week_start", { ascending: false, nullsFirst: false })
+      .limit(1)
+      .then(({ data }) => data?.[0]?.fact && setFact(data[0].fact));
+  }, []);
 
   useEffect(() => {
     // Open-Meteo, no API key — Satna coordinates
@@ -85,7 +109,7 @@ export default function TodayInSatna() {
             {t("Aaj ka vichar", "आज का विचार")}
           </p>
           <p className="text-sm font-medium leading-snug text-ink">
-            “{t(todayThought.en, todayThought.hi)}”
+            “{t(thought.en, thought.hi)}”
           </p>
           <p className="text-[10px] text-muted">{t("Community submitted", "समुदाय द्वारा")}</p>
         </div>
@@ -95,7 +119,7 @@ export default function TodayInSatna() {
           <p className="text-xs font-medium text-sand">
             {t("This week in Satna history", "इस सप्ताह इतिहास में")}
           </p>
-          <p className="text-sm leading-snug text-ink">{historyFact}</p>
+          <p className="text-sm leading-snug text-ink">{fact}</p>
         </div>
 
         {/* Mood of the city */}

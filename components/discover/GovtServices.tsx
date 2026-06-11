@@ -1,33 +1,56 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { seedGovtServices } from "@/lib/seed-more";
+import { useEffect, useMemo, useState } from "react";
+import { seedGovtServices, type GovtService } from "@/lib/seed-more";
+import { getSupabase } from "@/lib/supabase";
 import { useT } from "../LangProvider";
 
 export default function GovtServices() {
   const t = useT();
   const [query, setQuery] = useState("");
+  const [services, setServices] = useState<GovtService[]>(seedGovtServices);
+
+  // live directory — admin edits show up without a redeploy
+  useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) return;
+    sb.from("govt_services")
+      .select("*")
+      .eq("status", "published")
+      .order("department_en")
+      .then(({ data }) => {
+        if (data?.length) {
+          setServices(
+            data.map((d) => ({
+              dept_en: d.department_en,
+              dept_hi: d.department_hi ?? "",
+              address: d.address ?? "",
+              timings: d.timings ?? "",
+              phone: d.phone,
+              services: d.services_offered ?? "",
+            })),
+          );
+        }
+      });
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
-    if (!q) return seedGovtServices;
-    return seedGovtServices.filter(
+    if (!q) return services;
+    return services.filter(
       (s) =>
         s.dept_en.toLowerCase().includes(q) ||
         s.dept_hi.includes(q) ||
         s.services.toLowerCase().includes(q),
     );
-  }, [query]);
+  }, [services, query]);
 
   return (
     <div className="px-4">
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder={t(
-          "Search department or service…",
-          "विभाग या सेवा खोजें…",
-        )}
+        placeholder={t("Search department or service…", "विभाग या सेवा खोजें…")}
         className="mt-3 w-full rounded-full border border-cardline bg-white px-4 py-2.5 text-sm text-ink"
       />
       <div className="mt-3 space-y-2.5">
@@ -35,17 +58,21 @@ export default function GovtServices() {
           <article key={s.dept_en} className="card p-4">
             <h3 className="text-sm font-semibold text-ink">{s.dept_en}</h3>
             <p className="text-xs text-muted">{s.dept_hi}</p>
-            <p className="mt-2 text-xs text-muted">📍 {s.address}</p>
-            <p className="mt-0.5 text-xs text-muted">🕐 {s.timings}</p>
-            <p className="mt-1.5 text-sm text-ink">{s.services}</p>
+            {s.address && <p className="mt-2 text-xs text-muted">📍 {s.address}</p>}
+            {s.timings && <p className="mt-0.5 text-xs text-muted">🕐 {s.timings}</p>}
+            {s.services && <p className="mt-1.5 text-sm text-ink">{s.services}</p>}
             <div className="mt-3 flex gap-2 border-t border-cardline pt-3">
-              {s.phone && (
+              {s.phone ? (
                 <a
                   href={`tel:${s.phone}`}
                   className="flex-1 rounded-full bg-primary py-2 text-center text-xs font-semibold text-white"
                 >
                   📞 {s.phone}
                 </a>
+              ) : (
+                <span className="flex-1 rounded-full bg-canvas py-2 text-center text-xs text-muted">
+                  {t("Phone to be added", "फोन नंबर जल्द")}
+                </span>
               )}
               <button className="flex-1 rounded-full border border-cardline py-2 text-xs font-medium text-muted">
                 {t("Update info", "जानकारी सुधारें")}

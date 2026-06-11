@@ -78,6 +78,15 @@ export default function Leaderboard() {
         })}
       </div>
 
+      {rows.length === 1 && (
+        <p className="mt-3 text-center text-xs text-muted">
+          {t(
+            "You're the first player — share the app and start the competition!",
+            "आप पहले खिलाड़ी हैं — ऐप शेयर करें और मुकाबला शुरू करें!",
+          )}
+        </p>
+      )}
+
       {youIndex >= 10 && (
         <div className="card mt-2 flex items-center gap-3 border-primary/40 px-4 py-3">
           <span className="w-7 text-center text-sm font-semibold text-muted">

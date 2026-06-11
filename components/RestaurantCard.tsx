@@ -7,7 +7,7 @@ export function RestaurantScrollCard({ r }: { r: Restaurant }) {
   const open = isOpenNow(r);
   return (
     <Link
-      href={`/discover/restaurants/${r.slug}`}
+      href={`/discover/restaurant?slug=${r.slug}`}
       className="card w-52 shrink-0 overflow-hidden"
     >
       <div className="relative">
@@ -17,7 +17,7 @@ export function RestaurantScrollCard({ r }: { r: Restaurant }) {
           emojiKey={r.cuisines[0]}
           className="h-28 w-full"
         />
-        {open && (
+        {r.open_time && open && (
           <span className="absolute left-2 top-2 rounded bg-positive px-1.5 py-0.5 text-[10px] font-semibold text-white">
             Open now
           </span>
@@ -32,7 +32,11 @@ export function RestaurantScrollCard({ r }: { r: Restaurant }) {
           {r.cuisines.join(" · ")}
         </p>
         <div className="mt-2 flex items-center justify-between">
-          <Stars rating={r.avg_rating} />
+          {r.review_count > 0 ? (
+            <Stars rating={r.avg_rating} />
+          ) : (
+            <span className="text-[11px] text-muted">New</span>
+          )}
           <span className="text-xs font-medium text-muted">
             {priceSymbol(r.price_range)}
           </span>
@@ -45,7 +49,7 @@ export function RestaurantScrollCard({ r }: { r: Restaurant }) {
 export function RestaurantListCard({ r }: { r: Restaurant }) {
   const open = isOpenNow(r);
   return (
-    <Link href={`/discover/restaurants/${r.slug}`} className="card flex gap-3 p-3">
+    <Link href={`/discover/restaurant?slug=${r.slug}`} className="card flex gap-3 p-3">
       <CardImage
         src={r.hero_image_url}
         alt={r.name_en}
@@ -71,22 +75,30 @@ export function RestaurantListCard({ r }: { r: Restaurant }) {
         </div>
         <p className="truncate text-xs text-muted">{r.cuisines.join(" · ")}</p>
         <div className="mt-1.5 flex items-center gap-2">
-          <Stars rating={r.avg_rating} />
-          <span className="text-xs text-muted">({r.review_count})</span>
+          {r.review_count > 0 && (
+            <>
+              <Stars rating={r.avg_rating} />
+              <span className="text-xs text-muted">({r.review_count})</span>
+            </>
+          )}
           <span className="text-xs font-medium text-muted">
             {priceSymbol(r.price_range)}
           </span>
         </div>
-        <p className="mt-1.5 text-xs">
-          {open ? (
-            <span className="font-medium text-positive">Open now</span>
-          ) : (
-            <span className="font-medium text-danger">Closed</span>
-          )}{" "}
-          <span className="text-muted">
-            · {formatTime12(r.open_time)} – {formatTime12(r.close_time)}
-          </span>
-        </p>
+        {r.open_time && r.close_time ? (
+          <p className="mt-1.5 text-xs">
+            {open ? (
+              <span className="font-medium text-positive">Open now</span>
+            ) : (
+              <span className="font-medium text-danger">Closed</span>
+            )}{" "}
+            <span className="text-muted">
+              · {formatTime12(r.open_time)} – {formatTime12(r.close_time)}
+            </span>
+          </p>
+        ) : (
+          r.phone && <p className="mt-1.5 text-xs text-muted">📞 {r.phone}</p>
+        )}
       </div>
     </Link>
   );

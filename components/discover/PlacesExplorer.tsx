@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Place, PlaceCategory } from "@/lib/types";
 import { PlaceListCard } from "../PlaceCard";
+import { getSupabase } from "@/lib/supabase";
 import { useT } from "../LangProvider";
 
 const filters: { key: PlaceCategory | "all"; en: string; hi: string }[] = [
@@ -29,9 +30,22 @@ export default function PlacesExplorer({
       : "all",
   );
 
+  const [live, setLive] = useState<Place[] | null>(null);
+
+  useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) return;
+    sb.from("places")
+      .select("*")
+      .eq("status", "published")
+      .order("is_featured", { ascending: false })
+      .then(({ data }) => data && setLive(data as Place[]));
+  }, []);
+
+  const source = live ?? places;
   const filtered = useMemo(
-    () => (filter === "all" ? places : places.filter((p) => p.category === filter)),
-    [places, filter],
+    () => (filter === "all" ? source : source.filter((p) => p.category === filter)),
+    [source, filter],
   );
 
   return (

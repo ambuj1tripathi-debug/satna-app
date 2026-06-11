@@ -18,7 +18,11 @@ export function FeaturedPlaceCard({ place }: { place: Place }) {
         <p className="truncate text-sm font-semibold text-ink">{place.name_en}</p>
         <p className="truncate text-xs text-muted">{place.name_hi}</p>
         <div className="mt-2 flex items-center justify-between">
-          <Stars rating={place.avg_rating} />
+          {place.review_count > 0 ? (
+            <Stars rating={place.avg_rating} />
+          ) : (
+            <span className="text-[11px] text-muted">—</span>
+          )}
           <span className="text-[11px] text-muted">{place.distance_km} km</span>
         </div>
       </div>
@@ -46,7 +50,7 @@ export function PlaceListCard({ place }: { place: Place }) {
             </h3>
             <p className="text-sm text-muted">{place.name_hi}</p>
           </div>
-          <Stars rating={place.avg_rating} />
+          {place.review_count > 0 && <Stars rating={place.avg_rating} />}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           <CategoryBadge category={place.category} />

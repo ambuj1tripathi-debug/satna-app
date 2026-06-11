@@ -1,15 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TopBar from "@/components/TopBar";
 import { useLang, useT } from "@/components/LangProvider";
+import { useAuth } from "@/lib/auth";
+import { getSupabase } from "@/lib/supabase";
 
 export default function MorePage() {
   const t = useT();
   const { lang, toggle } = useLang();
+  const { user } = useAuth();
   const [shared, setShared] = useState(false);
   const [showContribute, setShowContribute] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const sb = getSupabase();
+    if (!sb || !user) {
+      setIsAdmin(false);
+      return;
+    }
+    sb.from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) =>
+        setIsAdmin(["admin", "super_admin", "moderator"].includes(data?.role ?? "")),
+      );
+  }, [user]);
 
   const share = async () => {
     const data = {
@@ -101,6 +120,18 @@ export default function MorePage() {
             <p className="text-xs text-muted">{t("Kuch gadbad? Batayiye.", "कुछ गड़बड़? बताइए।")}</p>
           </div>
         </Link>
+
+        {isAdmin && (
+          <Link href="/admin" className={rowCls + " border-primary/40"}>
+            <span className="text-xl">🛠️</span>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-primary">{t("Admin panel", "एडमिन पैनल")}</p>
+              <p className="text-xs text-muted">
+                {t("Manage restaurants, places, events, alerts", "रेस्टोरेंट, स्थान, कार्यक्रम, अलर्ट प्रबंधित करें")}
+              </p>
+            </div>
+          </Link>
+        )}
 
         <button onClick={share} className={rowCls}>
           <span className="text-xl">📲</span>

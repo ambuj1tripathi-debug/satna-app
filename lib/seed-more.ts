@@ -68,29 +68,20 @@ export interface TransportRoute {
 }
 
 export const seedTrains: TransportRoute[] = [
-  { name: "Rewa Express (11447/48)", destination: "Delhi (via Katni)", timing: "Dep 18:35", frequency: "Daily", extra: "PF 1 · ~14 hrs" },
-  { name: "Sarnath Express", destination: "Prayagraj / Varanasi", timing: "Dep 13:10", frequency: "Daily", extra: "PF 2 · ~3 hrs to Prayagraj" },
-  { name: "Mahanagari Express", destination: "Mumbai CSMT", timing: "Dep 21:50", frequency: "Daily", extra: "PF 1 · ~17 hrs" },
-  { name: "Howrah Mail", destination: "Howrah (via Prayagraj)", timing: "Dep 23:15", frequency: "Daily", extra: "PF 3 · ~14 hrs" },
-  { name: "Intercity Express", destination: "Jabalpur", timing: "Dep 07:20", frequency: "Daily", extra: "PF 2 · ~3 hrs" },
-  { name: "Vindhyachal Express", destination: "Bhopal (via Katni)", timing: "Dep 20:05", frequency: "Daily", extra: "PF 1 · ~8 hrs" },
+  { name: "Rewa Express", destination: "Delhi (via Katni)", timing: null, frequency: null, extra: "Check IRCTC for live timings" },
+  { name: "Sarnath Express", destination: "Prayagraj / Varanasi", timing: null, frequency: null, extra: "Check IRCTC for live timings" },
+  { name: "Mahanagari Express", destination: "Mumbai CSMT", timing: null, frequency: null, extra: "Check IRCTC for live timings" },
+  { name: "Vindhyachal Express", destination: "Bhopal (via Katni)", timing: null, frequency: null, extra: "Check IRCTC for live timings" },
 ];
 
 export const seedBuses: TransportRoute[] = [
-  { name: "MP Roadways", destination: "Rewa", timing: "First 06:00, last 21:00", frequency: "Every 30 min", extra: "1.5 hrs" },
-  { name: "MP Roadways / Private", destination: "Jabalpur", timing: "First 05:30, last 19:00", frequency: "Hourly", extra: "3 hrs" },
-  { name: "Private operators", destination: "Prayagraj", timing: "06:00 / 09:00 / 14:00 / 22:00", frequency: "4–5 daily", extra: "3.5 hrs · sleeper at night" },
-  { name: "Private sleeper", destination: "Bhopal", timing: "Dep 21:00", frequency: "Daily", extra: "7–8 hrs" },
-  { name: "Local shuttle", destination: "Maihar", timing: "Throughout the day", frequency: "Every 20 min", extra: "50 min · extra during Navratri" },
+  { name: "MP Roadways / Private", destination: "Rewa", timing: null, frequency: null, extra: "From Satna Bus Stand" },
+  { name: "MP Roadways / Private", destination: "Jabalpur", timing: null, frequency: null, extra: "From Satna Bus Stand" },
+  { name: "Private operators", destination: "Prayagraj", timing: null, frequency: null, extra: "From Satna Bus Stand" },
+  { name: "Local shuttle", destination: "Maihar", timing: null, frequency: null, extra: "Frequent during Navratri" },
 ];
 
-export const seedFares = [
-  { from: "Satna Junction", to: "Bus Stand", fare: "₹30–40", verified: true },
-  { from: "Satna Junction", to: "Civil Lines", fare: "₹40–60", verified: true },
-  { from: "Satna Junction", to: "Collectorate", fare: "₹50–70", verified: true },
-  { from: "Bus Stand", to: "Dhawari Chowk", fare: "₹20–30", verified: true },
-  { from: "Satna Junction", to: "Bharhut Museum", fare: "₹150–200 (return)", verified: false },
-];
+export const seedFares: { from: string; to: string; fare: string; verified: boolean }[] = [];
 
 export const seedIntercity = [
   { to: "Rewa", km: 60, time: "1–1.5 hrs", options: "Bus, shared cab, train" },
@@ -109,16 +100,16 @@ export interface GovtService {
 }
 
 export const seedGovtServices: GovtService[] = [
-  { dept_en: "District Collectorate", dept_hi: "जिला कलेक्ट्रेट", address: "Collectorate Campus, Satna", timings: "Mon–Fri 10:30–17:30", phone: "07672-222401", services: "Revenue matters, Jan Sunwai (Tue), certificates, RTI" },
-  { dept_en: "Satna Municipal Corporation", dept_hi: "नगर निगम सतना", address: "City Office, Satna", timings: "Mon–Sat 10:30–17:30", phone: "07672-222301", services: "Property tax, birth/death certificates, sanitation" },
+  { dept_en: "District Collectorate", dept_hi: "जिला कलेक्ट्रेट", address: "Collectorate Campus, Satna", timings: "Mon–Fri 10:30–17:30", phone: null, services: "Revenue matters, Jan Sunwai (Tue), certificates, RTI" },
+  { dept_en: "Satna Municipal Corporation", dept_hi: "नगर निगम सतना", address: "City Office, Satna", timings: "Mon–Sat 10:30–17:30", phone: null, services: "Property tax, birth/death certificates, sanitation" },
   { dept_en: "SDM Office", dept_hi: "एसडीएम कार्यालय", address: "Collectorate Campus", timings: "Mon–Fri 10:30–17:30", phone: null, services: "Land records, magistrate matters" },
-  { dept_en: "Civil Hospital Satna", dept_hi: "जिला चिकित्सालय", address: "Hospital Road, Satna", timings: "OPD 9–16 · Emergency 24x7", phone: "07672-223333", services: "OPD, emergency, maternity, pathology" },
+  { dept_en: "Civil Hospital Satna", dept_hi: "जिला चिकित्सालय", address: "Hospital Road, Satna", timings: "OPD 9–16 · Emergency 24x7", phone: null, services: "OPD, emergency, maternity, pathology" },
   { dept_en: "District Court", dept_hi: "जिला न्यायालय", address: "Court Campus, Satna", timings: "Mon–Sat 10:30–17:00", phone: null, services: "District judiciary, legal aid (DLSA)" },
   { dept_en: "Police HQ (SP Office)", dept_hi: "पुलिस अधीक्षक कार्यालय", address: "SP Office, Satna", timings: "Control room 24x7", phone: "100", services: "FIR, verification, thana contacts" },
   { dept_en: "Passport Seva Kendra", dept_hi: "पासपोर्ट सेवा केंद्र", address: "Head Post Office, Satna", timings: "Mon–Fri 9–16 (appointment)", phone: null, services: "Passports — book via passportindia.gov.in" },
   { dept_en: "Aadhaar Enrollment Center", dept_hi: "आधार केंद्र", address: "Head Post Office & lok seva kendras", timings: "Mon–Sat 10–17", phone: null, services: "New Aadhaar, updates, biometrics" },
   { dept_en: "MPEZ Electricity Board", dept_hi: "विद्युत मंडल", address: "Power House Road, Satna", timings: "Complaints 24x7", phone: "1912", services: "Connections, billing, outage complaints" },
-  { dept_en: "Jal Nigam / PHE", dept_hi: "जल निगम", address: "PHE Office, Satna", timings: "Mon–Sat 10:30–17:30", phone: "07672-222555", services: "Water supply complaints, new connections" },
+  { dept_en: "Jal Nigam / PHE", dept_hi: "जल निगम", address: "PHE Office, Satna", timings: "Mon–Sat 10:30–17:30", phone: null, services: "Water supply complaints, new connections" },
   { dept_en: "RTO Office", dept_hi: "परिवहन कार्यालय", address: "RTO Campus, Rewa Road", timings: "Mon–Fri 10:30–17:30", phone: null, services: "Driving licence, registration, permits" },
   { dept_en: "Employment Exchange", dept_hi: "रोजगार कार्यालय", address: "Collectorate Campus", timings: "Mon–Fri 10:30–17:30", phone: null, services: "Job registration, career counselling" },
   { dept_en: "Krishi Vigyan Kendra", dept_hi: "कृषि विज्ञान केंद्र", address: "Majhgawan, Satna", timings: "Mon–Sat 10–17", phone: null, services: "Farmer training, soil testing, advisories" },
@@ -181,29 +172,14 @@ export const quizQuestions: QuizQuestion[] = [
 ];
 
 // ---------- Play: leaderboard (seed users; current user merged in at runtime) ----------
-export const seedLeaderboard = [
-  { name: "Ankit Verma", neighborhood: "Civil Lines", xp: 2840, badges: ["🎓", "🏛️"] },
-  { name: "Pooja Singh", neighborhood: "Dhawari", xp: 2310, badges: ["🎓"] },
-  { name: "Mohit Jain", neighborhood: "Mukhtiyarganj", xp: 1985, badges: ["🏆"] },
-  { name: "Sneha Patel", neighborhood: "Rewa Road", xp: 1720, badges: [] },
-  { name: "Rahul Chaturvedi", neighborhood: "Civil Lines", xp: 1540, badges: ["🧭"] },
-  { name: "Farhan Ali", neighborhood: "Panna Naka", xp: 1390, badges: [] },
-  { name: "Deepa Mishra", neighborhood: "Ward 7", xp: 1175, badges: [] },
-  { name: "Sahil Khan", neighborhood: "Station Road", xp: 980, badges: [] },
-  { name: "Anita Singh", neighborhood: "Rewa Road", xp: 860, badges: [] },
-  { name: "Ramesh Gupta", neighborhood: "Civil Lines", xp: 740, badges: [] },
-];
+export const seedLeaderboard: { name: string; neighborhood: string; xp: number; badges: string[] }[] = [];
 
 // ---------- Play: city challenge ----------
 export const currentChallenge = {
   title: "Find and photograph the Bharhut lion pillar carving",
   description:
     "This week's challenge: visit the Bharhut Archaeological Museum and photograph the lion capital fragment. Bonus: name the century it was carved.",
-  entries: [
-    { id: "ce1", user: "Mohit Jain", answer: "2nd century BCE", upvotes: 23 },
-    { id: "ce2", user: "Deepa Mishra", answer: "2nd century BCE", upvotes: 17 },
-    { id: "ce3", user: "Sahil Khan", answer: "3rd century BCE", upvotes: 9 },
-  ],
+  entries: [] as { id: string; user: string; answer: string; upvotes: number }[],
 };
 
 // ---------- Play: bingo ----------

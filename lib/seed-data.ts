@@ -470,60 +470,29 @@ export const seedEvents: CityEvent[] = [
   },
 ];
 
-export const seedReviews: Review[] = [
-  { id: "v1", subject_type: "restaurant", subject_id: "r1", username: "Amit K.", rating: 5, body: "Best dal tadka on NH-30. Portions are huge, go hungry!", created_at: "2026-06-02T13:00:00+05:30" },
-  { id: "v2", subject_type: "restaurant", subject_id: "r1", username: "Pooja S.", rating: 4, body: "Good food, gets crowded after 8 PM. Family section is clean.", created_at: "2026-05-28T20:30:00+05:30" },
-  { id: "v3", subject_type: "restaurant", subject_id: "r2", username: "Ravi T.", rating: 5, body: "Khoya peda yahan ka sabse best hai. Sunday jalebi must try.", created_at: "2026-06-05T09:00:00+05:30" },
-  { id: "v4", subject_type: "restaurant", subject_id: "r3", username: "Neha M.", rating: 4, body: "AC dining, decent thali. Manchurian was good too.", created_at: "2026-05-20T21:00:00+05:30" },
-  { id: "v5", subject_type: "restaurant", subject_id: "r4", username: "Sandeep V.", rating: 5, body: "35 saal se same taste. Golgappe ka pani teekha perfect.", created_at: "2026-06-07T18:00:00+05:30" },
-];
+export const seedReviews: Review[] = [];
 
-export const seedLivePulse: LivePulseItem[] = [
-  {
-    id: "lp1",
-    kind: "dining",
-    text_en: "Rahul from Civil Lines is looking for lunch company at Krishna Dhaba",
-    text_hi: "सिविल लाइन्स के राहुल कृष्णा ढाबा पर लंच साथी ढूंढ रहे हैं",
-    meta: "Today 1:30 PM · 2 spots",
-    href: "/discover?tab=dine",
-  },
-  {
-    id: "lp2",
-    kind: "cab",
-    text_en: "Priya posted a cab share: Satna → Rewa tomorrow 9 AM",
-    text_hi: "प्रिया ने कैब शेयर पोस्ट की: सतना → रीवा कल सुबह 9 बजे",
-    meta: "2 seats · ₹150/person",
-    href: "/discover?tab=cab",
-  },
-  {
-    id: "lp3",
-    kind: "photo",
-    text_en: "New photo added to Maihar Devi",
-    text_hi: "मैहर देवी में नई फोटो जुड़ी",
-    meta: "12 minutes ago",
-    href: "/discover?tab=places",
-  },
-];
+export const seedLivePulse: LivePulseItem[] = [];
 
 export const heroBanners = [
   {
     id: "hb1",
-    title_en: "Maihar Mela 2026 — 14 days to go",
-    title_hi: "मैहर मेला २०२६ — १४ दिन बाकी",
-    href: "/discover?tab=places",
-    tone: "primary" as const,
-  },
-  {
-    id: "hb2",
-    title_en: "New: Bharhut Stupa Trail is live",
-    title_hi: "नया: भरहुत स्तूप ट्रेल लाइव है",
+    title_en: "Walk the Bharhut & Maihar heritage trails",
+    title_hi: "भरहुत व मैहर धरोहर ट्रेल पर चलें",
     href: "/discover?tab=trails",
     tone: "heritage" as const,
   },
   {
+    id: "hb2",
+    title_en: "Going somewhere? Share a cab and split the cost",
+    title_hi: "कहीं जा रहे हैं? कैब शेयर करें, खर्च बाँटें",
+    href: "/discover?tab=cab",
+    tone: "primary" as const,
+  },
+  {
     id: "hb3",
-    title_en: "Community Alert: Water supply disruption in Ward 12",
-    title_hi: "सामुदायिक अलर्ट: वार्ड 12 में जल आपूर्ति बाधित",
+    title_en: "Satna Yaadein — share an old photo or story of our city",
+    title_hi: "सतना यादें — शहर की पुरानी फोटो या किस्सा साझा करें",
     href: "/community",
     tone: "danger" as const,
   },
@@ -535,4 +504,4 @@ export const todayThought = {
 };
 
 export const historyFact =
-  "On this day in 1962, Bharhut Stupa fragments were officially catalogued by the ASI.";
+  "In 1873, Alexander Cunningham discovered the Bharhut Stupa in Satna district — its carved railings are among the oldest surviving Buddhist art in India.";

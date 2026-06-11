@@ -143,6 +143,17 @@ export default function Feed() {
             </article>
           );
         })}
+        {filtered.length === 0 && (
+          <div className="card p-8 text-center">
+            <p className="text-2xl">💬</p>
+            <p className="mt-2 text-sm text-muted">
+              {t(
+                "The community board is open — be the first to post! Use the + button below.",
+                "समुदाय बोर्ड खुला है — पहली पोस्ट आप करें! नीचे + दबाएँ।",
+              )}
+            </p>
+          </div>
+        )}
       </div>
 
       {showCompose ? (

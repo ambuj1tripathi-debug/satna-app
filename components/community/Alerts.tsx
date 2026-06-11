@@ -1,7 +1,9 @@
 "use client";
 
-import { seedAlerts } from "@/lib/seed-community";
+import { useEffect, useState } from "react";
+import type { CityAlert } from "@/lib/types";
 import { usePersistentState } from "@/lib/store";
+import { getSupabase } from "@/lib/supabase";
 import { useT } from "../LangProvider";
 
 const severityStyles: Record<
@@ -25,10 +27,39 @@ export default function Alerts() {
   const [responses, setResponses] = usePersistentState<
     Record<string, "active" | "resolved">
   >("alert-responses", {});
+  const [alerts, setAlerts] = useState<CityAlert[]>([]);
+
+  useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) return;
+    sb.from("alerts")
+      .select("*")
+      .eq("moderation", "approved")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => data && setAlerts(data as CityAlert[]));
+  }, []);
+
+  if (alerts.length === 0) {
+    return (
+      <div className="card mx-4 mt-4 p-8 text-center">
+        <p className="text-2xl">🟢</p>
+        <p className="mt-2 text-sm font-medium text-ink">
+          {t("No active alerts — sab theek hai!", "कोई सक्रिय अलर्ट नहीं — सब ठीक है!")}
+        </p>
+        <p className="mt-1 text-xs text-muted">
+          {t(
+            "City alerts (water, power, traffic) posted by the Satna team appear here.",
+            "शहर के अलर्ट (पानी, बिजली, यातायात) यहाँ दिखेंगे।",
+          )}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-3 space-y-3 px-4">
-      {seedAlerts.map((a) => {
+      {alerts.map((a) => {
         const s = severityStyles[a.severity];
         const response = responses[a.id];
         return (

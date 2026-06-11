@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import type { Restaurant, VegType, PriceRange } from "@/lib/types";
 import { RestaurantListCard } from "../RestaurantCard";
+import { getSupabase } from "@/lib/supabase";
 import { useT } from "../LangProvider";
 
 const vegFilters: { key: VegType | "all"; en: string; hi: string }[] = [
@@ -35,9 +37,22 @@ export default function RestaurantsExplorer({
   const [cuisine, setCuisine] = useState<string | null>(null);
   const [price, setPrice] = useState<PriceRange | null>(null);
   const [sort, setSort] = useState<(typeof sorts)[number]["key"]>("rating");
+  const [live, setLive] = useState<Restaurant[] | null>(null);
+
+  // refresh from DB so admin-added restaurants appear without a redeploy
+  useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) return;
+    sb.from("restaurants")
+      .select("*")
+      .eq("status", "published")
+      .then(({ data }) => data && setLive(data as Restaurant[]));
+  }, []);
+
+  const source = live ?? restaurants;
 
   const filtered = useMemo(() => {
-    let list = restaurants.filter((r) => {
+    let list = source.filter((r) => {
       if (veg === "veg" && !["veg", "pure_veg", "jain"].includes(r.veg_type)) return false;
       if (veg === "non_veg" && !["non_veg", "mixed"].includes(r.veg_type)) return false;
       if (veg === "pure_veg" && r.veg_type !== "pure_veg") return false;
@@ -52,7 +67,7 @@ export default function RestaurantsExplorer({
       return 0; // newest: seed order
     });
     return list;
-  }, [restaurants, veg, cuisine, price, sort]);
+  }, [source, veg, cuisine, price, sort]);
 
   return (
     <div>
@@ -127,12 +142,26 @@ export default function RestaurantsExplorer({
         {filtered.map((r) => (
           <RestaurantListCard key={r.id} r={r} />
         ))}
-        {filtered.length === 0 && (
+        {filtered.length === 0 && source.length > 0 && (
           <div className="card p-8 text-center text-sm text-muted">
             {t(
               "No restaurants match these filters — try removing one.",
               "इन फ़िल्टर से कोई रेस्टोरेंट नहीं मिला — एक हटाकर देखें।",
             )}
+          </div>
+        )}
+        {source.length === 0 && (
+          <div className="card p-8 text-center">
+            <p className="text-2xl">🍽️</p>
+            <p className="mt-2 text-sm text-muted">
+              {t(
+                "Restaurant listings are being added by the Satna team — check back soon.",
+                "रेस्टोरेंट सूची जोड़ी जा रही है — जल्द देखें।",
+              )}
+            </p>
+            <Link href="/more/feedback" className="mt-2 inline-block text-xs font-semibold text-primary">
+              {t("Suggest a restaurant →", "रेस्टोरेंट सुझाएँ →")}
+            </Link>
           </div>
         )}
       </div>
